@@ -1,62 +1,82 @@
--- GUI untuk Ganti Skin Roblox
--- Script ini hanya bisa jalan di executor (exploit) dengan loadstring
+-- GUI Template Menu: Drag, Minimize, Speed Hack, Jump Hack
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local chr = lp.Character or lp.CharacterAdded:Wait()
 
--- Buat GUI sederhana
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local Button1 = Instance.new("TextButton")
-local Button2 = Instance.new("TextButton")
+-- GUI Setup
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "CustomMenu"
 
-ScreenGui.Parent = game.CoreGui
-Frame.Parent = ScreenGui
-Frame.Size = UDim2.new(0, 250, 0, 150)
-Frame.Position = UDim2.new(0.5, -125, 0.5, -75)
-Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Frame.BorderSizePixel = 0
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 300, 0, 200)
+main.Position = UDim2.new(0.05, 0, 0.3, 0)
+main.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+main.Active = true
+main.Draggable = true
+main.BorderSizePixel = 0
 
-Button1.Parent = Frame
-Button1.Position = UDim2.new(0.1, 0, 0.2, 0)
-Button1.Size = UDim2.new(0.8, 0, 0.3, 0)
-Button1.Text = "Ganti Skin ke Style 1"
-Button1.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+-- Minimize Button
+local minimize = Instance.new("TextButton", main)
+minimize.Size = UDim2.new(0, 30, 0, 30)
+minimize.Position = UDim2.new(1, -35, 0, 5)
+minimize.Text = "-"
+minimize.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+minimize.TextColor3 = Color3.new(1, 1, 1)
 
-Button2.Parent = Frame
-Button2.Position = UDim2.new(0.1, 0, 0.6, 0)
-Button2.Size = UDim2.new(0.8, 0, 0.3, 0)
-Button2.Text = "Ganti Skin ke Style 2"
-Button2.BackgroundColor3 = Color3.fromRGB(100, 100, 200)
+-- Maximize Button (hidden by default)
+local maximize = Instance.new("TextButton", gui)
+maximize.Size = UDim2.new(0, 100, 0, 40)
+maximize.Position = UDim2.new(0.05, 0, 0.3, 0)
+maximize.Text = "Show Menu"
+maximize.Visible = false
+maximize.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+maximize.TextColor3 = Color3.new(1, 1, 1)
 
--- Fungsi untuk ganti skin
-function applySkin(id)
-    local desc = game.Players.LocalPlayer.Character.Humanoid:GetAppliedDescription()
-    desc.Shirt = id.Shirt
-    desc.Pants = id.Pants
-    desc.Head = id.Head or desc.Head
-    desc.Face = id.Face or desc.Face
-    desc.HairAccessory = id.Hair or ""
-    game.Players.LocalPlayer.Character.Humanoid:ApplyDescription(desc)
-end
+-- Speed Hack Button
+local speedBtn = Instance.new("TextButton", main)
+speedBtn.Size = UDim2.new(0.8, 0, 0, 40)
+speedBtn.Position = UDim2.new(0.1, 0, 0.3, 0)
+speedBtn.Text = "Speed Hack: OFF"
+speedBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+speedBtn.TextColor3 = Color3.new(1, 1, 1)
 
--- Skin Style 1
-local skin1 = {
-    Shirt = 14407675989, -- ID kaos
-    Pants = 14407681597, -- ID celana
-    Face = 7074786,      -- Smile
-    Hair = 62234425      -- ID aksesori rambut
-}
+-- Jump Hack Button
+local jumpBtn = Instance.new("TextButton", main)
+jumpBtn.Size = UDim2.new(0.8, 0, 0, 40)
+jumpBtn.Position = UDim2.new(0.1, 0, 0.55, 0)
+jumpBtn.Text = "Jump Hack: OFF"
+jumpBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+jumpBtn.TextColor3 = Color3.new(1, 1, 1)
 
--- Skin Style 2
-local skin2 = {
-    Shirt = 14407695397,
-    Pants = 14407699166,
-    Face = 86487700,     -- ID wajah lain
-    Hair = 451221329     -- ID rambut
-}
+-- Functionality
+local speedOn = false
+local jumpOn = false
 
-Button1.MouseButton1Click:Connect(function()
-    applySkin(skin1)
+speedBtn.MouseButton1Click:Connect(function()
+	speedOn = not speedOn
+	local humanoid = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.WalkSpeed = speedOn and 100 or 16
+	end
+	speedBtn.Text = "Speed Hack: " .. (speedOn and "ON" or "OFF")
 end)
 
-Button2.MouseButton1Click:Connect(function()
-    applySkin(skin2)
+jumpBtn.MouseButton1Click:Connect(function()
+	jumpOn = not jumpOn
+	local humanoid = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.JumpPower = jumpOn and 120 or 50
+	end
+	jumpBtn.Text = "Jump Hack: " .. (jumpOn and "ON" or "OFF")
+end)
+
+-- Minimize & Maximize Logic
+minimize.MouseButton1Click:Connect(function()
+	main.Visible = false
+	maximize.Visible = true
+end)
+
+maximize.MouseButton1Click:Connect(function()
+	main.Visible = true
+	maximize.Visible = false
 end)
