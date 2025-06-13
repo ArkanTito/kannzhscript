@@ -25,7 +25,8 @@ main.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 main.Active = true
 main.Draggable = true
 main.BorderSizePixel = 0
-main.CanvasSize = UDim2.new(0, 0, 0, 600) -- tambahkan panjang konten
+main.AutomaticCanvasSize = Enum.AutomaticSize.Y
+main.CanvasSize = UDim2.new(0, 0, 0, 0)
 main.ScrollBarThickness = 6
 
 local minimize = Instance.new("TextButton", main)
@@ -368,4 +369,15 @@ lp.CharacterAdded:Connect(function()
     if flyVel then flyVel:Destroy() end
     if flyGyro then flyGyro:Destroy() end
     if flyConn then flyConn:Disconnect() flyConn = nil end
+end)
+lp.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid").Died:Connect(function()
+		if flying then
+			flying = false
+			flyBtn.Text = "Fly: OFF"
+			if flyVel then flyVel:Destroy() end
+			if flyGyro then flyGyro:Destroy() end
+			if flyConn then flyConn:Disconnect() flyConn = nil end
+		end
+	end)
 end)
