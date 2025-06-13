@@ -90,17 +90,25 @@ espBtn.Position = UDim2.new(0.1, 0, 0.81, 0)
 espBtn.Text = "ESP: OFF"
 espBtn.Parent = main
 
+-- Fungsi ESP lengkap dengan hitbox dan hide name
 local function createESP(plr)
 	if plr == lp then return end
 	local char = plr.Character or plr.CharacterAdded:Wait()
 	local head = char:WaitForChild("Head", 5)
 	if not head then return end
 
+	-- Sembunyikan name bawaan
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	end
+
+	-- Billboard nama custom
 	local billboard = Instance.new("BillboardGui", head)
 	billboard.Name = "ESP"
 	billboard.Adornee = head
 	billboard.Size = UDim2.new(0, 100, 0, 40)
-	billboard.StudsOffset = Vector3.new(0, 2, 0)
+	billboard.StudsOffset = Vector3.new(0, 2.5, 0)
 	billboard.AlwaysOnTop = true
 
 	local nameLabel = Instance.new("TextLabel", billboard)
@@ -110,27 +118,47 @@ local function createESP(plr)
 	nameLabel.TextColor3 = Color3.new(1, 0, 0)
 	nameLabel.TextStrokeTransparency = 0.5
 	nameLabel.TextScaled = true
-end
 
-local function removeESP(plr)
-	if plr.Character then
-		local esp = plr.Character:FindFirstChild("Head"):FindFirstChild("ESP")
-		if esp then esp:Destroy() end
-	end
-end
-
-espBtn.MouseButton1Click:Connect(function()
-	espEnabled = not espEnabled
-	espBtn.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
-
-	for _, p in pairs(Players:GetPlayers()) do
-		if espEnabled then
-			createESP(p)
-		else
-			removeESP(p)
+	-- Hitbox BoxHandleAdornment
+	for _, part in pairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			local box = Instance.new("BoxHandleAdornment", part)
+			box.Name = "ESPBox"
+			box.Adornee = part
+			box.AlwaysOnTop = true
+			box.ZIndex = 5
+			box.Size = part.Size
+			box.Color3 = Color3.fromRGB(0, 255, 0)
+			box.Transparency = 0.7
 		end
 	end
-end)
+end
+
+-- Hapus ESP dan tampilkan nama asli lagi
+local function removeESP(plr)
+	local char = plr.Character
+	if not char then return end
+
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+	end
+
+	local head = char:FindFirstChild("Head")
+	if head and head:FindFirstChild("ESP") then
+		head.ESP:Destroy()
+	end
+
+	for _, part in pairs(char:GetChildren()) do
+		if part:IsA("BasePart") then
+			for _, adorn in pairs(part:GetChildren()) do
+				if adorn:IsA("BoxHandleAdornment") and adorn.Name == "ESPBox" then
+					adorn:Destroy()
+				end
+			end
+		end
+	end
+end
 
 -- Auto add/remove ESP if player joins
 Players.PlayerAdded:Connect(function(p)
@@ -192,16 +220,19 @@ flyBtn.MouseButton1Click:Connect(function()
 			flyGyro.CFrame = hrp.CFrame
 
 			flyConn = RunService.RenderStepped:Connect(function()
-				if not flying then return end
-				local cam = workspace.CurrentCamera
-				local dir = Vector3.zero
-				if keys[Enum.KeyCode.W] then dir += cam.CFrame.LookVector end
-				if keys[Enum.KeyCode.S] then dir -= cam.CFrame.LookVector end
-				if keys[Enum.KeyCode.A] then dir -= cam.CFrame.RightVector end
-				if keys[Enum.KeyCode.D] then dir += cam.CFrame.RightVector end
-				flyVel.Velocity = dir.Unit * (tonumber(speedBox.Text) or 50)
-				flyGyro.CFrame = cam.CFrame
-			end)
+	if not flying then return end
+	local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+	local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+	if hrp and hum then
+		local dir = hum.MoveDirection
+		if dir.Magnitude > 0 then
+			flyVel.Velocity = dir.Unit * (tonumber(speedBox.Text) or 50)
+		else
+			flyVel.Velocity = Vector3.zero
+		end
+		flyGyro.CFrame = workspace.CurrentCamera.CFrame
+	end
+end)
 		end
 	else
 		if flyVel then flyVel:Destroy() end
