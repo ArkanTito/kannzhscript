@@ -1,4 +1,4 @@
--- Roblox GUI Hack Menu Lengkap + Fix Scroll/Drag + Fake Chat
+-- Roblox GUI Hack Menu Lengkap + Fix Scroll/Drag + Fake Chat + Refresh Player Dropdown
 
 -- Layanan Roblox
 local Players = game:GetService("Players")
@@ -58,7 +58,7 @@ header.TextColor3 = Color3.new(1, 1, 1)
 
 header.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
-	header.Text = main.Visible and "Hack Menu - Klik Untuk Minimize" or "Hack Menu - Klik Untuk Maximize"
+	header.Text = main.Visible and "Hack Menu - Klik Untuk Minimize" or "MENU"
 end)
 
 -- Fungsi membuat input
@@ -185,6 +185,15 @@ local function removeESP(plr)
     local head = char:FindFirstChild("Head")
     if head and head:FindFirstChild("ESP") then head.ESP:Destroy() end
 end
+Players.PlayerAdded:Connect(function(p)
+    if espEnabled then
+        createESP(p)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(p)
+    removeESP(p)
+end)
 
 local espBtn = Instance.new("TextButton", main)
 espBtn.Size = UDim2.new(0.8, 0, 0, 30)
@@ -225,13 +234,21 @@ dropdownList.Position = UDim2.new(0.1, 0, 0, 490)
 dropdownList.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 dropdownList.Visible = false
 
-local UIListLayout = Instance.new("UIListLayout", dropdownList)
+-- UIListLayout hanya dibuat sekali
+local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = dropdownList
 
-dropdown.MouseButton1Click:Connect(function()
-    dropdownList.Visible = not dropdownList.Visible
-    dropdownList:ClearAllChildren()
-    UIListLayout.Parent = dropdownList
+-- Fungsi refresh dropdown
+local function refreshDropdown()
+    -- Hapus semua kecuali UIListLayout
+    for _, child in ipairs(dropdownList:GetChildren()) do
+        if not child:IsA("UIListLayout") then
+            child:Destroy()
+        end
+    end
+
+    -- Tambah tombol nama pemain
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= lp then
             local btn = Instance.new("TextButton", dropdownList)
@@ -250,8 +267,24 @@ dropdown.MouseButton1Click:Connect(function()
             end)
         end
     end
-end)
 
+    -- Tombol refresh
+    local refreshBtn = Instance.new("TextButton", dropdownList)
+    refreshBtn.Size = UDim2.new(1, 0, 0, 25)
+    refreshBtn.Text = "🔄 Refresh"
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    refreshBtn.TextColor3 = Color3.new(1, 1, 1)
+    refreshBtn.MouseButton1Click:Connect(refreshDropdown)
+end
+
+-- Klik dropdown buka daftar & refresh
+dropdown.MouseButton1Click:Connect(function()
+    dropdownList.Visible = not dropdownList.Visible
+    if dropdownList.Visible then
+        refreshDropdown()
+    end
+end)
+    
 -- Noclip
 local noclipEnabled = false
 local noclipConn
@@ -277,8 +310,17 @@ noclipBtn.MouseButton1Click:Connect(function()
             end
         end)
     else
-        if noclipConn then
-            noclipConn:Disconnect()
+    if noclipConn then
+        noclipConn:Disconnect()
+    end
+    -- Pulihkan CanCollide
+    if lp.Character then
+        for _, part in pairs(lp.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
         end
+    end
+end
     end
 end)
