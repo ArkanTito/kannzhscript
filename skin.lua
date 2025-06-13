@@ -16,8 +16,9 @@ lp.Idled:Connect(function()
 end)
 
 -- GUI
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "HackMenu"
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Parent = lp:WaitForChild("PlayerGui")
 
 -- Container utama yang bisa dipindah
 local container = Instance.new("Frame", gui)
