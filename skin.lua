@@ -1,5 +1,8 @@
 -- GUI Menu Lengkap: Fly, Speed, Jump, Noclip
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
 local lp = Players.LocalPlayer
 local chr = lp.Character or lp.CharacterAdded:Wait()
 
@@ -67,7 +70,7 @@ jumpBtn.Text = "Set"
 jumpBtn.Position = UDim2.new(0.62, 0, 0.39, 0)
 jumpBtn.Parent = main
 
--- Fly button
+-- Fly & Noclip buttons
 local flyBtn = Instance.new("TextButton", main)
 flyBtn.Size = UDim2.new(0.8, 0, 0, 30)
 flyBtn.Position = UDim2.new(0.1, 0, 0.55, 0)
@@ -75,13 +78,12 @@ flyBtn.Text = "Fly: OFF"
 flyBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 flyBtn.TextColor3 = Color3.new(1,1,1)
 
--- Noclip button
 local noclipBtn = flyBtn:Clone()
 noclipBtn.Position = UDim2.new(0.1, 0, 0.68, 0)
 noclipBtn.Text = "Noclip: OFF"
 noclipBtn.Parent = main
 
--- Functionality
+-- Speed & Jump logic
 speedBtn.MouseButton1Click:Connect(function()
 	local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
 	if hum then
@@ -102,9 +104,19 @@ jumpBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Fly Script
+-- Fly logic
 local flying = false
 local flyVel, flyGyro
+local flyConn = nil
+
+local keys = {}
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if not gpe then keys[input.KeyCode] = true end
+end)
+UserInputService.InputEnded:Connect(function(input, gpe)
+	if not gpe then keys[input.KeyCode] = false end
+end)
+
 flyBtn.MouseButton1Click:Connect(function()
 	flying = not flying
 	flyBtn.Text = "Fly: " .. (flying and "ON" or "OFF")
@@ -120,39 +132,47 @@ flyBtn.MouseButton1Click:Connect(function()
 			flyGyro.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
 			flyGyro.CFrame = hrp.CFrame
 
-			game:GetService("RunService").RenderStepped:Connect(function()
+			flyConn = RunService.RenderStepped:Connect(function()
 				if not flying then return end
 				local cam = workspace.CurrentCamera
 				local dir = Vector3.zero
-				if lp:GetMouse().W then dir = dir + cam.CFrame.LookVector end
-				if lp:GetMouse().S then dir = dir - cam.CFrame.LookVector end
-				if lp:GetMouse().A then dir = dir - cam.CFrame.RightVector end
-				if lp:GetMouse().D then dir = dir + cam.CFrame.RightVector end
-				flyVel.Velocity = dir * (tonumber(speedBox.Text) or 50)
+				if keys[Enum.KeyCode.W] then dir += cam.CFrame.LookVector end
+				if keys[Enum.KeyCode.S] then dir -= cam.CFrame.LookVector end
+				if keys[Enum.KeyCode.A] then dir -= cam.CFrame.RightVector end
+				if keys[Enum.KeyCode.D] then dir += cam.CFrame.RightVector end
+				flyVel.Velocity = dir.Unit * (tonumber(speedBox.Text) or 50)
 				flyGyro.CFrame = cam.CFrame
 			end)
 		end
 	else
 		if flyVel then flyVel:Destroy() end
 		if flyGyro then flyGyro:Destroy() end
+		if flyConn then flyConn:Disconnect() flyConn = nil end
 	end
 end)
 
--- Noclip Script
+-- Noclip logic
 local noclip = false
+local noclipConn = nil
+
 noclipBtn.MouseButton1Click:Connect(function()
 	noclip = not noclip
 	noclipBtn.Text = "Noclip: " .. (noclip and "ON" or "OFF")
 
-	game:GetService("RunService").Stepped:Connect(function()
-		if noclip and lp.Character then
-			for _, v in pairs(lp.Character:GetDescendants()) do
-				if v:IsA("BasePart") and v.CanCollide then
-					v.CanCollide = false
+	if noclip and not noclipConn then
+		noclipConn = RunService.Stepped:Connect(function()
+			if lp.Character then
+				for _, v in pairs(lp.Character:GetDescendants()) do
+					if v:IsA("BasePart") then
+						v.CanCollide = false
+					end
 				end
 			end
-		end
-	end)
+		end)
+	elseif not noclip and noclipConn then
+		noclipConn:Disconnect()
+		noclipConn = nil
+	end
 end)
 
 -- Minimize / Maximize
