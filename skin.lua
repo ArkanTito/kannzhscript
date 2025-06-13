@@ -155,3 +155,130 @@ end)
 
 -- Selesai: fitur tambahan lainnya bisa disisipkan juga setelah ini
 -- Misalnya fly, noclip, teleport, dll seperti yang kamu punya sebelumnya
+
+-- ESP Toggle
+local espEnabled = false
+local function createESP(plr)
+    if plr == lp then return end
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local head = char:WaitForChild("Head", 5)
+    if not head then return end
+
+    local billboard = Instance.new("BillboardGui", head)
+    billboard.Name = "ESP"
+    billboard.Size = UDim2.new(0, 100, 0, 40)
+    billboard.AlwaysOnTop = true
+    billboard.Adornee = head
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+
+    local label = Instance.new("TextLabel", billboard)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = plr.Name
+    label.TextColor3 = Color3.new(1, 0, 0)
+    label.TextScaled = true
+end
+
+local function removeESP(plr)
+    local char = plr.Character
+    if not char then return end
+    local head = char:FindFirstChild("Head")
+    if head and head:FindFirstChild("ESP") then head.ESP:Destroy() end
+end
+
+local espBtn = Instance.new("TextButton", main)
+espBtn.Size = UDim2.new(0.8, 0, 0, 30)
+espBtn.Position = UDim2.new(0.1, 0, 0, 400)
+espBtn.Text = "ESP: OFF"
+espBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+espBtn.TextColor3 = Color3.new(1, 1, 1)
+
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espBtn.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= lp then
+            if espEnabled then createESP(p) else removeESP(p) end
+        end
+    end
+end)
+
+-- Dropdown teleport
+local tpLabel = Instance.new("TextLabel", main)
+tpLabel.Size = UDim2.new(0.8, 0, 0, 20)
+tpLabel.Position = UDim2.new(0.1, 0, 0, 440)
+tpLabel.Text = "Teleport ke:"
+tpLabel.BackgroundTransparency = 1
+tpLabel.TextColor3 = Color3.new(1, 1, 1)
+tpLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local dropdown = Instance.new("TextButton", main)
+dropdown.Size = UDim2.new(0.8, 0, 0, 25)
+dropdown.Position = UDim2.new(0.1, 0, 0, 465)
+dropdown.Text = "Pilih Player"
+dropdown.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+dropdown.TextColor3 = Color3.new(1, 1, 1)
+
+local dropdownList = Instance.new("Frame", main)
+dropdownList.Size = UDim2.new(0.8, 0, 0, 100)
+dropdownList.Position = UDim2.new(0.1, 0, 0, 490)
+dropdownList.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+dropdownList.Visible = false
+
+local UIListLayout = Instance.new("UIListLayout", dropdownList)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+dropdown.MouseButton1Click:Connect(function()
+    dropdownList.Visible = not dropdownList.Visible
+    dropdownList:ClearAllChildren()
+    UIListLayout.Parent = dropdownList
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= lp then
+            local btn = Instance.new("TextButton", dropdownList)
+            btn.Size = UDim2.new(1, 0, 0, 25)
+            btn.Text = player.Name
+            btn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+            btn.TextColor3 = Color3.new(1, 1, 1)
+            btn.MouseButton1Click:Connect(function()
+                local targetChar = player.Character
+                local hrp = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+                local myHRP = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+                if hrp and myHRP then
+                    myHRP.CFrame = hrp.CFrame + Vector3.new(0, 3, 0)
+                end
+                dropdownList.Visible = false
+            end)
+        end
+    end
+end)
+
+-- Noclip
+local noclipEnabled = false
+local noclipConn
+
+local noclipBtn = Instance.new("TextButton", main)
+noclipBtn.Size = UDim2.new(0.8, 0, 0, 30)
+noclipBtn.Position = UDim2.new(0.1, 0, 0, 600)
+noclipBtn.Text = "Noclip: OFF"
+noclipBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+noclipBtn.TextColor3 = Color3.new(1, 1, 1)
+
+noclipBtn.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    noclipBtn.Text = "Noclip: " .. (noclipEnabled and "ON" or "OFF")
+    if noclipEnabled then
+        noclipConn = RunService.Stepped:Connect(function()
+            if lp.Character then
+                for _, part in pairs(lp.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        if noclipConn then
+            noclipConn:Disconnect()
+        end
+    end
+end)
