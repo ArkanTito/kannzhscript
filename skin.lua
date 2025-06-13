@@ -6,6 +6,14 @@ local UserInputService = game:GetService("UserInputService")
 local lp = Players.LocalPlayer
 local chr = lp.Character or lp.CharacterAdded:Wait()
 
+local VirtualUser = game:GetService("VirtualUser")
+
+lp.Idled:Connect(function()
+	VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+	task.wait(1)
+	VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+end)
+
 -- GUI Setup
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "HackMenu"
@@ -89,7 +97,7 @@ local espBtn = flyBtn:Clone()
 espBtn.Position = UDim2.new(0.1, 0, 0.81, 0)
 espBtn.Text = "ESP: OFF"
 espBtn.Parent = main
-
+		
 -- Fungsi ESP lengkap dengan hitbox dan hide name
 local function createESP(plr)
 	if plr == lp then return end
@@ -170,6 +178,73 @@ Players.PlayerAdded:Connect(function(p)
 	end
 end)
 
+espBtn.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	espBtn.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+
+	for _, p in pairs(Players:GetPlayers()) do
+	if p ~= lp then
+		if espEnabled then
+			createESP(p)
+		else
+			removeESP(p)
+		end
+	end
+end
+	end)
+
+-- Label
+local tpLabel = Instance.new("TextLabel", main)
+tpLabel.Size = UDim2.new(0.8, 0, 0, 20)
+tpLabel.Position = UDim2.new(0.1, 0, 1, -85)
+tpLabel.Text = "Teleport ke Player:"
+tpLabel.BackgroundTransparency = 1
+tpLabel.TextColor3 = Color3.new(1, 1, 1)
+tpLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Input box
+local tpBox = Instance.new("TextBox", main)
+tpBox.Size = UDim2.new(0.5, 0, 0, 25)
+tpBox.Position = UDim2.new(0.1, 0, 1, -60)
+tpBox.PlaceholderText = "Nama Player"
+tpBox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+tpBox.TextColor3 = Color3.new(1, 1, 1)
+
+-- Tombol teleport
+local tpBtn = Instance.new("TextButton", main)
+tpBtn.Size = UDim2.new(0.3, 0, 0, 25)
+tpBtn.Position = UDim2.new(0.62, 0, 1, -60)
+tpBtn.Text = "Teleport"
+tpBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+tpBtn.TextColor3 = Color3.new(1, 1, 1)
+
+-- Fungsi teleport
+tpBtn.MouseButton1Click:Connect(function()
+	local name = tpBox.Text
+	for _, p in pairs(Players:GetPlayers()) do
+		if string.lower(p.Name):sub(1, #name) == string.lower(name) then
+			local targetChar = p.Character
+			local hrp = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+			local myHRP = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+			if hrp and myHRP then
+				myHRP.CFrame = hrp.CFrame + Vector3.new(0, 3, 0)
+			end
+		end
+	end
+end)
+
+local infYieldBtn = Instance.new("TextButton", main)
+infYieldBtn.Size = UDim2.new(0.8, 0, 0, 30)
+infYieldBtn.Position = UDim2.new(0.1, 0, 1, -30)
+infYieldBtn.Text = "Load Infinite Yield"
+infYieldBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+infYieldBtn.TextColor3 = Color3.new(1, 1, 1)
+infYieldBtn.Parent = main
+
+infYieldBtn.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
 -- Speed & Jump logic
 speedBtn.MouseButton1Click:Connect(function()
 	local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
@@ -222,16 +297,38 @@ flyBtn.MouseButton1Click:Connect(function()
 			flyConn = RunService.RenderStepped:Connect(function()
 	if not flying then return end
 	local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-	local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
-	if hrp and hum then
-		local dir = hum.MoveDirection
-		if dir.Magnitude > 0 then
-			flyVel.Velocity = dir.Unit * (tonumber(speedBox.Text) or 50)
-		else
-			flyVel.Velocity = Vector3.zero
-		end
-		flyGyro.CFrame = workspace.CurrentCamera.CFrame
+	if not hrp then return end
+
+	local cam = workspace.CurrentCamera
+	local direction = Vector3.zero
+	local speed = tonumber(speedBox.Text) or 50
+
+	if keys[Enum.KeyCode.W] then
+		direction = direction + cam.CFrame.LookVector
 	end
+	if keys[Enum.KeyCode.S] then
+		direction = direction - cam.CFrame.LookVector
+	end
+	if keys[Enum.KeyCode.A] then
+		direction = direction - cam.CFrame.RightVector
+	end
+	if keys[Enum.KeyCode.D] then
+		direction = direction + cam.CFrame.RightVector
+	end
+	if keys[Enum.KeyCode.E] then
+		direction = direction + cam.CFrame.UpVector
+	end
+	if keys[Enum.KeyCode.Q] then
+		direction = direction - cam.CFrame.UpVector
+	end
+
+	if direction.Magnitude > 0 then
+		flyVel.Velocity = direction.Unit * speed
+	else
+		flyVel.Velocity = Vector3.zero
+	end
+
+	flyGyro.CFrame = cam.CFrame
 end)
 		end
 	else
@@ -274,4 +371,11 @@ end)
 maximize.MouseButton1Click:Connect(function()
 	main.Visible = true
 	maximize.Visible = false
+end)
+lp.CharacterAdded:Connect(function()
+    flying = false
+    flyBtn.Text = "Fly: OFF"
+    if flyVel then flyVel:Destroy() end
+    if flyGyro then flyGyro:Destroy() end
+    if flyConn then flyConn:Disconnect() flyConn = nil end
 end)
