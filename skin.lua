@@ -18,13 +18,15 @@ end)
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "HackMenu"
 
-local main = Instance.new("Frame", gui)
+local main = Instance.new("ScrollingFrame", gui)
 main.Size = UDim2.new(0, 300, 0, 300)
 main.Position = UDim2.new(0.05, 0, 0.3, 0)
 main.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 main.Active = true
 main.Draggable = true
 main.BorderSizePixel = 0
+main.CanvasSize = UDim2.new(0, 0, 0, 600) -- tambahkan panjang konten
+main.ScrollBarThickness = 6
 
 local minimize = Instance.new("TextButton", main)
 minimize.Size = UDim2.new(0, 30, 0, 30)
@@ -231,18 +233,6 @@ tpBtn.MouseButton1Click:Connect(function()
 			end
 		end
 	end
-end)
-
-local infYieldBtn = Instance.new("TextButton", main)
-infYieldBtn.Size = UDim2.new(0.8, 0, 0, 30)
-infYieldBtn.Position = UDim2.new(0.1, 0, 1, -30)
-infYieldBtn.Text = "Load Infinite Yield"
-infYieldBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-infYieldBtn.TextColor3 = Color3.new(1, 1, 1)
-infYieldBtn.Parent = main
-
-infYieldBtn.MouseButton1Click:Connect(function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
 -- Speed & Jump logic
