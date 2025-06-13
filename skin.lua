@@ -83,6 +83,65 @@ noclipBtn.Position = UDim2.new(0.1, 0, 0.68, 0)
 noclipBtn.Text = "Noclip: OFF"
 noclipBtn.Parent = main
 
+-- ESP Player
+local espEnabled = false
+local espBtn = flyBtn:Clone()
+espBtn.Position = UDim2.new(0.1, 0, 0.81, 0)
+espBtn.Text = "ESP: OFF"
+espBtn.Parent = main
+
+local function createESP(plr)
+	if plr == lp then return end
+	local char = plr.Character or plr.CharacterAdded:Wait()
+	local head = char:WaitForChild("Head", 5)
+	if not head then return end
+
+	local billboard = Instance.new("BillboardGui", head)
+	billboard.Name = "ESP"
+	billboard.Adornee = head
+	billboard.Size = UDim2.new(0, 100, 0, 40)
+	billboard.StudsOffset = Vector3.new(0, 2, 0)
+	billboard.AlwaysOnTop = true
+
+	local nameLabel = Instance.new("TextLabel", billboard)
+	nameLabel.Size = UDim2.new(1, 0, 1, 0)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = plr.Name
+	nameLabel.TextColor3 = Color3.new(1, 0, 0)
+	nameLabel.TextStrokeTransparency = 0.5
+	nameLabel.TextScaled = true
+end
+
+local function removeESP(plr)
+	if plr.Character then
+		local esp = plr.Character:FindFirstChild("Head"):FindFirstChild("ESP")
+		if esp then esp:Destroy() end
+	end
+end
+
+espBtn.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	espBtn.Text = "ESP: " .. (espEnabled and "ON" or "OFF")
+
+	for _, p in pairs(Players:GetPlayers()) do
+		if espEnabled then
+			createESP(p)
+		else
+			removeESP(p)
+		end
+	end
+end)
+
+-- Auto add/remove ESP if player joins
+Players.PlayerAdded:Connect(function(p)
+	if espEnabled then
+		p.CharacterAdded:Connect(function()
+			task.wait(1)
+			createESP(p)
+		end)
+	end
+end)
+
 -- Speed & Jump logic
 speedBtn.MouseButton1Click:Connect(function()
 	local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
